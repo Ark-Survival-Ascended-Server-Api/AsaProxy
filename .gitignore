@@ -21,6 +21,7 @@
 *.so
 *.dylib
 *.dll
+!thirdparty/dotnet/bin/nethost.dll
 
 # Fortran module files
 *.mod
