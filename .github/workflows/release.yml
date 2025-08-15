@@ -120,8 +120,10 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" =~ refs/tags/(.*) ]]; then
             VERSION="${BASH_REMATCH[1]}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.create_release }}" ]]; then
+          VERSION="${{ github.event.inputs.create_release }}"
           else
-            VERSION="dev-$(date +%Y%m%d-%H%M%S)"
+          VERSION="dev-$(date +%Y%m%d-%H%M%S)"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
