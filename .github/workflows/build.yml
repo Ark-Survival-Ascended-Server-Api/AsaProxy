@@ -55,12 +55,7 @@ jobs:
 
       - name: Configure xmake
         run: |
-          xmake config \
-            --mode=${{ env.BUILD_TYPE }} \
-            --arch=${{ matrix.arch }} \
-            --plat=${{ matrix.platform }} \
-            --ccache=n \
-            --yes
+          xmake config --mode=${{ env.BUILD_TYPE }} --arch=${{ matrix.arch }} --plat=${{ matrix.platform }} --ccache=n --yes
 
       - name: Build project
         run: |
