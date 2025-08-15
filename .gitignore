@@ -32,6 +32,7 @@
 *.la
 *.a
 *.lib
+!thirdparty/dotnet/lib/nethost.lib
 
 # Executables
 *.exe
