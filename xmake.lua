@@ -15,7 +15,7 @@ set_allowedarchs("x64")
 add_rules("mode.debug", "mode.release")
 add_rules("plugin.vsxmake.autoupdate")
 
-add_requires("dotnet-runtime", "spdlog")
+add_requires("dotnet-runtime")
 
 target("AsaProxy", function()
     set_kind("shared")
@@ -31,7 +31,7 @@ target("AsaProxy", function()
     add_rules("asm")
     set_values("asm.ml", "ml64.exe")
 
-    add_packages("dotnet-runtime", "spdlog")
+    add_packages("dotnet-runtime")
 
     add_defines("UNICODE", "_UNICODE")
 
