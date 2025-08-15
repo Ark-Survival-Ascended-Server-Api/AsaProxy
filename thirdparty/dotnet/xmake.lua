@@ -1,0 +1,17 @@
+package("dotnet-runtime")
+    set_sourcedir(os.scriptdir())
+    set_policy("package.install_always", true)
+
+    on_load(function (package)
+        package:add("includedirs", "include")
+        package:add("libdirs", "lib")
+        package:add("links", "nethost")
+        package:add("syslinks", "advapi32", "ole32", "oleaut32")
+    end)
+
+    on_install(function (package)
+        os.cp("include/*.h", package:installdir("include"))
+        os.cp("lib/*", package:installdir("lib"))
+        os.cp("bin/*.dll", package:installdir("bin"))
+    end)
+package_end()
