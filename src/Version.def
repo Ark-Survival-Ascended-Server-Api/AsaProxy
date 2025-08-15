@@ -1,0 +1,19 @@
+LIBRARY version.dll
+EXPORTS
+    GetFileVersionInfoA=get_file_version_info_a_wrapper @1
+    GetFileVersionInfoByHandle=get_file_version_info_by_handle_wrapper @2
+    GetFileVersionInfoExA=get_file_version_info_ex_a_wrapper @3
+    GetFileVersionInfoExW=get_file_version_info_ex_w_wrapper @4
+    GetFileVersionInfoSizeA=get_file_version_info_size_a_wrapper @5
+    GetFileVersionInfoSizeExA=get_file_version_info_size_ex_a_wrapper @6
+    GetFileVersionInfoSizeExW=get_file_version_info_size_ex_w_wrapper @7
+    GetFileVersionInfoSizeW=get_file_version_info_size_w_wrapper @8
+    GetFileVersionInfoW=get_file_version_info_w_wrapper @9
+    VerFindFileA=ver_find_file_a_wrapper @10
+    VerFindFileW=ver_find_file_w_wrapper @11
+    VerInstallFileA=ver_install_file_a_wrapper @12
+    VerInstallFileW=ver_install_file_w_wrapper @13
+    VerLanguageNameA=ver_language_name_a_wrapper @14
+    VerLanguageNameW=ver_language_name_w_wrapper @15
+    VerQueryValueA=ver_query_value_a_wrapper @16
+    VerQueryValueW=ver_query_value_w_wrapper @17

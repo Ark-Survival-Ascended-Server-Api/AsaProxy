@@ -1,0 +1,54 @@
+.code
+extern version_dll_proc_addresses:QWORD
+get_file_version_info_a_wrapper proc
+    jmp version_dll_proc_addresses[0*8]
+get_file_version_info_a_wrapper endp
+get_file_version_info_by_handle_wrapper proc
+    jmp version_dll_proc_addresses[1*8]
+get_file_version_info_by_handle_wrapper endp
+get_file_version_info_ex_a_wrapper proc
+    jmp version_dll_proc_addresses[2*8]
+get_file_version_info_ex_a_wrapper endp
+get_file_version_info_ex_w_wrapper proc
+    jmp version_dll_proc_addresses[3*8]
+get_file_version_info_ex_w_wrapper endp
+get_file_version_info_size_a_wrapper proc
+    jmp version_dll_proc_addresses[4*8]
+get_file_version_info_size_a_wrapper endp
+get_file_version_info_size_ex_a_wrapper proc
+    jmp version_dll_proc_addresses[5*8]
+get_file_version_info_size_ex_a_wrapper endp
+get_file_version_info_size_ex_w_wrapper proc
+    jmp version_dll_proc_addresses[6*8]
+get_file_version_info_size_ex_w_wrapper endp
+get_file_version_info_size_w_wrapper proc
+    jmp version_dll_proc_addresses[7*8]
+get_file_version_info_size_w_wrapper endp
+get_file_version_info_w_wrapper proc
+    jmp version_dll_proc_addresses[8*8]
+get_file_version_info_w_wrapper endp
+ver_find_file_a_wrapper proc
+    jmp version_dll_proc_addresses[9*8]
+ver_find_file_a_wrapper endp
+ver_find_file_w_wrapper proc
+    jmp version_dll_proc_addresses[10*8]
+ver_find_file_w_wrapper endp
+ver_install_file_a_wrapper proc
+    jmp version_dll_proc_addresses[11*8]
+ver_install_file_a_wrapper endp
+ver_install_file_w_wrapper proc
+    jmp version_dll_proc_addresses[12*8]
+ver_install_file_w_wrapper endp
+ver_language_name_a_wrapper proc
+    jmp version_dll_proc_addresses[13*8]
+ver_language_name_a_wrapper endp
+ver_language_name_w_wrapper proc
+    jmp version_dll_proc_addresses[14*8]
+ver_language_name_w_wrapper endp
+ver_query_value_a_wrapper proc
+    jmp version_dll_proc_addresses[15*8]
+ver_query_value_a_wrapper endp
+ver_query_value_w_wrapper proc
+    jmp version_dll_proc_addresses[16*8]
+ver_query_value_w_wrapper endp
+end
