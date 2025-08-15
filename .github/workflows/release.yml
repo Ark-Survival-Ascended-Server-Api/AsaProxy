@@ -164,10 +164,10 @@ jobs:
           ### 📦 Package Contents
           - **C++ Standard**: C++20
           - **Build Type**: Release
-          - **Platforms**: Windows (x64)
+          - **Platforms**: Windows
 
           ### 🏗️ Build Information
-          - **Compiler**: MSVC (Windows)
+          - **Compiler**: MSVC
           - **Build System**: xmake
           - **Architecture**: 64-bit
 
@@ -178,15 +178,7 @@ jobs:
           2. Extract to your desired location
           3. Add DLL directory alongside your executable
 
-          ### 🔒 Verification
-          Each package includes a SHA256 checksum file for integrity verification:
-          ```bash
-          sha256sum -c package-name.zip.sha256
-          ```
-
           ---
-
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ github.event.before }}...v${{ steps.version.outputs.version }}
 
           *Built with ❤️ using GitHub Actions*
           EOF
@@ -195,7 +187,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release/*
-          name: Release ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           tag_name: ${{ steps.version.outputs.version }}
           body_path: release_notes.md
           draft: false
