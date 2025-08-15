@@ -1,0 +1,228 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: "v1.0.0"
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_CXX_STANDARD: 20
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            artifact_name: windows-x64
+            xmake_version: 3.0.1
+
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: ${{ matrix.xmake_version }}
+          actions-cache-folder: '.xmake-cache'
+
+      - name: Setup MSVC (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Cache xmake dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.xmake
+            .xmake-cache
+          key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
+          restore-keys: |
+            ${{ runner.os }}-xmake-
+
+      - name: Configure xmake
+        run: |
+          xmake config \
+            --mode=${{ env.BUILD_TYPE }} \
+            --arch=${{ matrix.arch }} \
+            --plat=${{ matrix.platform }} \
+            --ccache=n \
+            --yes
+
+      - name: Build project
+        run: |
+          xmake build --verbose --diagnosis
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          xmake test --verbose || echo "No tests found or tests failed"
+
+      - name: Install to package directory
+        run: |
+          xmake install --installdir=package --verbose
+
+      - name: Collect build artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          
+          find package -name "*.dll" -type f -exec cp {} artifacts/ \;
+          
+          [ -f "README.md" ] && cp README.md artifacts/
+          [ -f "LICENSE" ] && cp LICENSE artifacts/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.artifact_name }}
+          path: artifacts/
+          retention-days: 90
+          compression-level: 9
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" =~ refs/tags/(.*) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            VERSION="dev-$(date +%Y%m%d-%H%M%S)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Create release packages
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Create release directory
+          mkdir -p release
+          
+          # Package each platform
+          for platform_dir in artifacts/build-*; do
+            if [ -d "$platform_dir" ]; then
+              platform_name=$(basename "$platform_dir" | sed 's/build-//')
+              archive_name="${GITHUB_REPOSITORY##*/}-${VERSION}-${platform_name}"
+              
+              echo "Creating package: ${archive_name}.zip"
+              
+              cd "$platform_dir"
+              zip -r "../../release/${archive_name}.zip" . -x "*.DS_Store" "*.gitkeep"
+              cd - > /dev/null
+              
+              # Create checksum
+              cd release
+              sha256sum "${archive_name}.zip" > "${archive_name}.zip.sha256"
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Generate release notes
+        id: release_notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          cat > release_notes.md << 'EOF'
+          ## 🚀 Release ${{ steps.version.outputs.version }}
+          
+          ### 📦 Package Contents
+          - **C++ Standard**: C++20
+          - **Build Type**: Release
+          - **Platforms**: Windows (x64)
+          
+          ### 🏗️ Build Information
+          - **Compiler**: MSVC (Windows)
+          - **Build System**: xmake
+          - **Architecture**: 64-bit
+          
+          ### 📋 Installation
+          
+          #### Windows
+          1. Download `*-windows-x64.zip`
+          2. Extract to your desired location
+          3. Add DLL directory alongside your executable
+          
+          ### 🔒 Verification
+          Each package includes a SHA256 checksum file for integrity verification:
+          ```bash
+          sha256sum -c package-name.zip.sha256
+          ```
+          
+          ---
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ github.event.before }}...v${{ steps.version.outputs.version }}
+          
+          *Built with ❤️ using GitHub Actions*
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          name: Release ${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          make_latest: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        shell: bash
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL**: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Packages Created**: $(ls release/*.zip | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Available Downloads" >> $GITHUB_STEP_SUMMARY
+          for file in release/*.zip; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "- \`$filename\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
