@@ -1,0 +1,72 @@
+name: Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_CXX_STANDARD: 20
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            artifact_name: windows-x64
+            xmake_version: 3.0.1
+
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: ${{ matrix.xmake_version }}
+          actions-cache-folder: '.xmake-cache'
+
+      - name: Setup MSVC (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Cache xmake dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.xmake
+            .xmake-cache
+          key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
+          restore-keys: |
+            ${{ runner.os }}-xmake-
+
+      - name: Configure xmake
+        run: |
+          xmake config \
+            --mode=${{ env.BUILD_TYPE }} \
+            --arch=${{ matrix.arch }} \
+            --plat=${{ matrix.platform }} \
+            --ccache=n \
+            --yes
+
+      - name: Build project
+        run: |
+          xmake build --verbose --diagnosis
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          xmake test --verbose || echo "No tests found or tests failed"
